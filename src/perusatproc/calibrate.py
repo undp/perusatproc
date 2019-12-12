@@ -92,7 +92,7 @@ def extract_metadata(metadata_path):
 def calibrate(*, src_path, dst_path, metadata_path):
     base_cmd = """otbcli_OpticalCalibration \
       -in {src} \
-      -out {dst} int \
+      -out {dst} uint16 \
       -milli true \
       -level toa \
       -acqui.minute {minute} \
@@ -125,7 +125,6 @@ def calibrate(*, src_path, dst_path, metadata_path):
                                   gainbias_path=gf.name,
                                   solarillum_path=sf.name,
                                   **metadata)
-            __import__('pdb').set_trace()
             run_command(cmd)
 
 
