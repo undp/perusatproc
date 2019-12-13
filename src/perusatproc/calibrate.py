@@ -111,12 +111,12 @@ def calibrate(*, src_path, dst_path, metadata_path):
 
     with tempfile.NamedTemporaryFile() as gf:
         for k in ('gains', 'biases'):
-            line = " : ".join(str(v) for v in metadata[k])
+            line = "{}\n".format(" : ".join(str(v) for v in metadata[k]))
             gf.write(line.encode())
             gf.flush()
 
         with tempfile.NamedTemporaryFile() as sf:
-            line = " : ".join(str(v) for v in metadata['solar_irradiances'])
+            line = "{}\n".format(" : ".join(str(v) for v in metadata['solar_irradiances']))
             sf.write(line.encode())
             sf.flush()
 
