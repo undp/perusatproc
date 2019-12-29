@@ -105,7 +105,8 @@ def parse_args(args):
                         action="store_const",
                         const=logging.DEBUG)
 
-    subparsers = parser.add_subparsers(dest='mode', required=True)
+    subparsers = parser.add_subparsers(dest='mode')
+    subparsers.required = True
 
     image_parser = subparsers.add_parser("image", help="calibrate an image")
     image_parser.add_argument("src", help="path to input image")
