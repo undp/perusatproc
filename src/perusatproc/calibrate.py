@@ -71,11 +71,15 @@ def extract_calibration_metadata(metadata_path):
     band_spectral_range = doc['Radiometric_Data']['Radiometric_Calibration'][
         'Instrument_Calibration']['Band_Measurement_List']
     band_radiances = band_spectral_range['Band_Radiance']
+    if not isinstance(band_radiances, list):
+        band_radiances = [band_radiances]
     gains = [float(r['GAIN']) for r in band_radiances]
     biases = [float(r['BIAS']) for r in band_radiances]
 
     # Solar irradiance values for each band
     band_solar_irradiances = band_spectral_range['Band_Solar_Irradiance']
+    if not isinstance(band_solar_irradiances, list):
+        band_solar_irradiances = [band_solar_irradiances]
     solar_irradiances = [float(r['VALUE']) for r in band_solar_irradiances]
 
     return dict(minute=time.minute,
@@ -175,11 +179,10 @@ def reproject(*, src_path, dst_path, metadata_path):
             wds.write(ds.read())
 
 
-def process_image(args):
-    metadata = args.metadata
+def process_image(src, dst, metadata=None):
     if not metadata:
         _logger.info("Metadata file not provided. Going to look for XML file in src image directory.")
-        src_dirname = os.path.dirname(args.src)
+        src_dirname = os.path.dirname(src)
         metadata_glob_path = os.path.join(src_dirname, 'DIM_*.XML')
         metadata_paths = glob(metadata_glob_path)
         if not metadata_paths:
@@ -191,16 +194,29 @@ def process_image(args):
     _logger.info("Metadata file: {}".format(metadata))
 
     with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
-        calibrate(src_path=args.src,
+        calibrate(src_path=src,
                   dst_path=tempf.name,
                   metadata_path=metadata)
         reproject(src_path=tempf.name,
-                  dst_path=args.dst,
+                  dst_path=dst,
                   metadata_path=metadata)
 
 
-def process_product(args):
-    print("To do")
+def process_product(src, dst):
+    volumes = glob(os.path.join(src, 'VOL_*'))
+    _logger.info("Num. Volumes: {}".format(len(volumes)))
+
+    os.makedirs(dst, exist_ok=True)
+
+    for volume in volumes:
+        ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
+        p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
+
+        for src_path in [ms_img]:
+            name, ext = os.path.splitext(os.path.basename(src_path))
+            dst_path = os.path.join(dst, name + ext)
+            if not os.path.exists(dst_path):
+                process_image(src=src_path, dst=dst_path)
 
 
 def parse_args(args):
@@ -221,14 +237,12 @@ def parse_args(args):
                         action="version",
                         version="perusatproc {ver}".format(ver=__version__))
 
-    parser.add_argument("-v",
-                        "--verbose",
+    parser.add_argument("-v", "--verbose",
                         dest="loglevel",
                         help="set loglevel to INFO",
                         action="store_const",
                         const=logging.INFO)
-    parser.add_argument("-vv",
-                        "--very-verbose",
+    parser.add_argument("-vv", "--very-verbose",
                         dest="loglevel",
                         help="set loglevel to DEBUG",
                         action="store_const",
@@ -239,8 +253,7 @@ def parse_args(args):
     image_parser = subparsers.add_parser("image", help="calibrate an image")
     image_parser.add_argument("src", help="path to input image")
     image_parser.add_argument("dst", help="path to output image")
-    image_parser.add_argument("-m",
-                              "--metadata",
+    image_parser.add_argument("-m", "--metadata",
                               help="path to metadata XML file")
 
     product_parser = subparsers.add_parser("product", help="calibrate a product")
@@ -273,9 +286,10 @@ def main(args):
     setup_logging(args.loglevel)
 
     if args.mode == 'image':
-        process_image(args)
+        process_image(args.src, args.dst,
+                      metadata=args.dst)
     else:
-        process_product(args)
+        process_product(args.src, args.dst)
 
 
 
