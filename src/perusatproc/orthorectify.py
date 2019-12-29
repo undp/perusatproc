@@ -23,7 +23,6 @@ from perusatproc import __version__
 
 import subprocess
 import xmltodict
-import tempfile
 from datetime import datetime
 import os
 import rasterio
@@ -72,18 +71,6 @@ def extract_metadata(metadata_path):
                 lry=miny)
 
 
-def set_projection_from_extent(src, west, south, east, north, width, height):
-    name, ext = os.path.splitext(src)
-    fixed_src = '{}_proj{}'.format(name, ext)
-    with rasterio.open(src) as ds:
-        profile = ds.profile.copy()
-        transform = rasterio.transform.from_bounds(west, south, east, north, width, height)
-        profile.update(transform=transform, crs='epsg:4326')
-        with rasterio.open(fixed_src, 'w', **profile) as wds:
-            wds.write(ds.read())
-    return fixed_src
-
-
 def orthorectify(*, src_path, dst_path, metadata_path, dem_path):
     base_cmd = """otbcli_OrthoRectification \
       -io.in {src} \
@@ -101,17 +88,8 @@ def orthorectify(*, src_path, dst_path, metadata_path, dem_path):
     """
     metadata = extract_metadata(metadata_path)
 
-    fixed_src_path = set_projection_from_extent(
-            src=src_path,
-            west=metadata['ulx'],
-            south=metadata['lry'],
-            east=metadata['lrx'],
-            north=metadata['uly'],
-            width=metadata['sizex'],
-            height=metadata['sizey'])
-
     elev_dem = '-elev.dem {}'.format(dem_path) if dem_path else ''
-    cmd = base_cmd.format(src=fixed_src_path,
+    cmd = base_cmd.format(src=src_path,
                           dst=dst_path,
                           geoid_path=GEOID_PATH,
                           elev_dem=elev_dem,

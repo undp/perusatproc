@@ -24,6 +24,7 @@ from perusatproc import __version__
 import subprocess
 import xmltodict
 import tempfile
+import rasterio
 from datetime import datetime
 
 __author__ = "Damián Silvani"
@@ -38,7 +39,7 @@ def run_command(cmd):
     subprocess.run(cmd, shell=True, check=True)
 
 
-def extract_metadata(metadata_path):
+def extract_calibration_metadata(metadata_path):
     with open(metadata_path) as f:
         body = xmltodict.parse(f.read())
 
@@ -89,6 +90,32 @@ def extract_metadata(metadata_path):
                 solar_irradiances=solar_irradiances)
 
 
+def extract_projection_metadata(metadata_path):
+    with open(metadata_path) as f:
+        body = xmltodict.parse(f.read())
+
+    doc = body['Dimap_Document']
+
+    # Raster size
+    raster_dimensions = doc['Raster_Data']['Raster_Dimensions']
+    sizex = int(raster_dimensions['NCOLS'])
+    sizey = int(raster_dimensions['NROWS'])
+
+    # Raster extent
+    vertices = doc['Dataset_Content']['Dataset_Extent']['Vertex']
+    lats = [float(v['LAT']) for v in vertices]
+    lons = [float(v['LON']) for v in vertices]
+    minx, maxx = min(lons), max(lons)
+    miny, maxy = min(lats), max(lats)
+
+    return dict(sizex=sizex,
+                sizey=sizey,
+                ulx=minx,
+                uly=maxy,
+                lrx=maxx,
+                lry=miny)
+
+
 def calibrate(*, src_path, dst_path, metadata_path):
     base_cmd = """otbcli_OpticalCalibration \
       -in {src} \
@@ -107,15 +134,15 @@ def calibrate(*, src_path, dst_path, metadata_path):
       -acqui.gainbias {gainbias_path} float \
       -acqui.solarilluminations {solarillum_path} float
     """
-    metadata = extract_metadata(metadata_path)
+    metadata = extract_calibration_metadata(metadata_path)
 
-    with tempfile.NamedTemporaryFile() as gf:
+    with tempfile.NamedTemporaryFile(suffix='.txt') as gf:
         for k in ('gains', 'biases'):
             line = "{}\n".format(" : ".join(str(v) for v in metadata[k]))
             gf.write(line.encode())
             gf.flush()
 
-        with tempfile.NamedTemporaryFile() as sf:
+        with tempfile.NamedTemporaryFile(suffix='.txt') as sf:
             line = "{}\n".format(" : ".join(str(v) for v in metadata['solar_irradiances']))
             sf.write(line.encode())
             sf.flush()
@@ -126,6 +153,24 @@ def calibrate(*, src_path, dst_path, metadata_path):
                                   solarillum_path=sf.name,
                                   **metadata)
             run_command(cmd)
+
+
+def reproject(*, src_path, dst_path, metadata_path):
+    metadata = extract_projection_metadata(metadata_path)
+
+    with rasterio.open(src_path) as ds:
+        profile = ds.profile.copy()
+        transform = rasterio.transform.from_bounds(
+            west=metadata['ulx'],
+            south=metadata['lry'],
+            east=metadata['lrx'],
+            north=metadata['uly'],
+            width=metadata['sizex'],
+            height=metadata['sizey'])
+
+        profile.update(transform=transform, crs='epsg:4326')
+        with rasterio.open(dst_path, 'w', **profile) as wds:
+            wds.write(ds.read())
 
 
 def parse_args(args):
@@ -191,9 +236,14 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    calibrate(src_path=args.src,
-              dst_path=args.dst,
-              metadata_path=args.metadata)
+    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
+        calibrate(src_path=args.src,
+                  dst_path=tempf.name,
+                  metadata_path=args.metadata)
+
+        reproject(src_path=tempf.name,
+                  dst_path=args.dst,
+                  metadata_path=args.metadata)
 
 
 def run():
