@@ -149,7 +149,8 @@ def calibrate(*, src_path, dst_path, metadata_path):
             gf.flush()
 
         with tempfile.NamedTemporaryFile(suffix='.txt') as sf:
-            line = "{}\n".format(" : ".join(str(v) for v in metadata['solar_irradiances']))
+            line = "{}\n".format(" : ".join(
+                str(v) for v in metadata['solar_irradiances']))
             sf.write(line.encode())
             sf.flush()
 
@@ -166,13 +167,12 @@ def reproject(*, src_path, dst_path, metadata_path):
 
     with rasterio.open(src_path) as ds:
         profile = ds.profile.copy()
-        transform = rasterio.transform.from_bounds(
-            west=metadata['ulx'],
-            south=metadata['lry'],
-            east=metadata['lrx'],
-            north=metadata['uly'],
-            width=metadata['sizex'],
-            height=metadata['sizey'])
+        transform = rasterio.transform.from_bounds(west=metadata['ulx'],
+                                                   south=metadata['lry'],
+                                                   east=metadata['lrx'],
+                                                   north=metadata['uly'],
+                                                   width=metadata['sizex'],
+                                                   height=metadata['sizey'])
 
         profile.update(transform=transform, crs='epsg:4326')
         with rasterio.open(dst_path, 'w', **profile) as wds:
@@ -181,7 +181,9 @@ def reproject(*, src_path, dst_path, metadata_path):
 
 def process_image(src, dst, metadata=None):
     if not metadata:
-        _logger.info("Metadata file not provided. Going to look for XML file in src image directory.")
+        _logger.info(
+            "Metadata file not provided. Going to look for XML file in src image directory."
+        )
         src_dirname = os.path.dirname(src)
         metadata_glob_path = os.path.join(src_dirname, 'DIM_*.XML')
         metadata_paths = glob(metadata_glob_path)
@@ -194,12 +196,8 @@ def process_image(src, dst, metadata=None):
     _logger.info("Metadata file: {}".format(metadata))
 
     with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
-        calibrate(src_path=src,
-                  dst_path=tempf.name,
-                  metadata_path=metadata)
-        reproject(src_path=tempf.name,
-                  dst_path=dst,
-                  metadata_path=metadata)
+        calibrate(src_path=src, dst_path=tempf.name, metadata_path=metadata)
+        reproject(src_path=tempf.name, dst_path=dst, metadata_path=metadata)
 
 
 def process_product(src, dst):
@@ -237,12 +235,14 @@ def parse_args(args):
                         action="version",
                         version="perusatproc {ver}".format(ver=__version__))
 
-    parser.add_argument("-v", "--verbose",
+    parser.add_argument("-v",
+                        "--verbose",
                         dest="loglevel",
                         help="set loglevel to INFO",
                         action="store_const",
                         const=logging.INFO)
-    parser.add_argument("-vv", "--very-verbose",
+    parser.add_argument("-vv",
+                        "--very-verbose",
                         dest="loglevel",
                         help="set loglevel to DEBUG",
                         action="store_const",
@@ -253,11 +253,14 @@ def parse_args(args):
     image_parser = subparsers.add_parser("image", help="calibrate an image")
     image_parser.add_argument("src", help="path to input image")
     image_parser.add_argument("dst", help="path to output image")
-    image_parser.add_argument("-m", "--metadata",
+    image_parser.add_argument("-m",
+                              "--metadata",
                               help="path to metadata XML file")
 
-    product_parser = subparsers.add_parser("product", help="calibrate a product")
-    product_parser.add_argument("src", help="path to directory containing product")
+    product_parser = subparsers.add_parser("product",
+                                           help="calibrate a product")
+    product_parser.add_argument("src",
+                                help="path to directory containing product")
     product_parser.add_argument("dst", help="path to output image")
 
     return parser.parse_args(args)
@@ -286,11 +289,9 @@ def main(args):
     setup_logging(args.loglevel)
 
     if args.mode == 'image':
-        process_image(args.src, args.dst,
-                      metadata=args.dst)
+        process_image(args.src, args.dst, metadata=args.dst)
     else:
         process_product(args.src, args.dst)
-
 
 
 def run():
