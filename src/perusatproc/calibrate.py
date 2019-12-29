@@ -25,6 +25,8 @@ import subprocess
 import xmltodict
 import tempfile
 import rasterio
+import os
+from glob import glob
 from datetime import datetime
 
 __author__ = "Damián Silvani"
@@ -173,6 +175,34 @@ def reproject(*, src_path, dst_path, metadata_path):
             wds.write(ds.read())
 
 
+def process_image(args):
+    metadata = args.metadata
+    if not metadata:
+        _logger.info("Metadata file not provided. Going to look for XML file in src image directory.")
+        src_dirname = os.path.dirname(args.src)
+        metadata_glob_path = os.path.join(src_dirname, 'DIM_*.XML')
+        metadata_paths = glob(metadata_glob_path)
+        if not metadata_paths:
+            raise RuntimeError(
+                'No metadata file found at {}. ' \
+                'Please provide one with -m/--metadata.'.format(src_dirname))
+        metadata = metadata_paths[0]
+
+    _logger.info("Metadata file: {}".format(metadata))
+
+    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
+        calibrate(src_path=args.src,
+                  dst_path=tempf.name,
+                  metadata_path=metadata)
+        reproject(src_path=tempf.name,
+                  dst_path=args.dst,
+                  metadata_path=metadata)
+
+
+def process_product(args):
+    print("To do")
+
+
 def parse_args(args):
     """Parse command line parameters
 
@@ -204,12 +234,18 @@ def parse_args(args):
                         action="store_const",
                         const=logging.DEBUG)
 
-    parser.add_argument("src", help="path to input image")
-    parser.add_argument("dst", help="path to output image")
-    parser.add_argument("-m",
-                        "--metadata",
-                        required=True,
-                        help="path to metadata XML file")
+    subparsers = parser.add_subparsers(dest='mode', required=True)
+
+    image_parser = subparsers.add_parser("image", help="calibrate an image")
+    image_parser.add_argument("src", help="path to input image")
+    image_parser.add_argument("dst", help="path to output image")
+    image_parser.add_argument("-m",
+                              "--metadata",
+                              help="path to metadata XML file")
+
+    product_parser = subparsers.add_parser("product", help="calibrate a product")
+    product_parser.add_argument("src", help="path to directory containing product")
+    product_parser.add_argument("dst", help="path to output image")
 
     return parser.parse_args(args)
 
@@ -236,14 +272,11 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
-        calibrate(src_path=args.src,
-                  dst_path=tempf.name,
-                  metadata_path=args.metadata)
+    if args.mode == 'image':
+        process_image(args)
+    else:
+        process_product(args)
 
-        reproject(src_path=tempf.name,
-                  dst_path=args.dst,
-                  metadata_path=args.metadata)
 
 
 def run():
