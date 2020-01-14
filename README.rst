@@ -14,7 +14,29 @@ the following processing steps:
 - Orthorectification
 - Pansharpening
 
-It uses Orfeo Toolbox.
+It depends on Orfeo Toolbox and some Python packages:
+
+- rasterio
+- xmltodict
+
+Modes
+=====
+
+Scripts
+-------
+
+`perusat_orthorectify`: Adds projection and RPC tags to an image from its
+metadata files, and them orthorectifies it using the RPC data and a DEM image.
+If no DEM is provided, a DEM from SRTM is used (1-arc second / 30m aprox GSD).
+
+`perusat_calibrate`: Calibrates image to top-of-atmosphere (ToA).
+
+`perusat_pansharpen`: Bundles a pancromatic (P) and multispectral (MS) image to
+form a pansharpened image.
+
+`perusat_process`: Given a path to a PeruSat-1 product, it peforms all required
+steps to form a single calibrated, orthorectified and pansharpened image. Final
+output can be a virtual raster or a tiff file.
 
 
 Note
