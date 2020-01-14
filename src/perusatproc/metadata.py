@@ -106,7 +106,7 @@ def extract_rpc_metadata(metadata_path):
     doc = body['Rpc_Document']
 
     inverse_model = doc['Inverse_Model']
-    err_bias = float(inverse_model['ERR_BIAS_COL'])
+    err_bias = -1.0  # unknown?
     err_rand = -1.0  # unknown?
 
     coeffs = dict()

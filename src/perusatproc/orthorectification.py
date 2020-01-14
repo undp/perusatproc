@@ -112,14 +112,7 @@ def orthorectify(*, src_path, dst_path, metadata_path, dem_path):
     base_cmd = """otbcli_OrthoRectification \
       -io.in {src} \
       -io.out {dst} uint16 \
-      -map wgs \
       -outputs.mode auto \
-      -outputs.ulx {ulx} \
-      -outputs.uly {uly} \
-      -outputs.lrx {lrx} \
-      -outputs.lry {lry} \
-      -outputs.sizex {sizex} \
-      -outputs.sizey {sizey} \
       -elev.geoid {geoid_path} \
       {elev_dem}
     """
