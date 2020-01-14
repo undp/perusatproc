@@ -21,6 +21,7 @@ _logger = logging.getLogger(__name__)
 DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..',
                          '..', 'data')
 GEOID_PATH = os.path.join(DATA_PATH, 'egm96.grd')
+DEM_PATH = os.path.join(DATA_PATH, 'dem')
 RPC_COEFF_KEYS = [
     'err_bias',
     'err_rand',
@@ -108,20 +109,29 @@ def add_rpc_tags(*, src_path, dst_path, metadata_path):
             dst.update_tags(ns='RPC', **tags)
 
 
-def orthorectify(*, src_path, dst_path, metadata_path, dem_path):
+def orthorectify(dem_path=None,
+                 geoid_path=None,
+                 *,
+                 src_path,
+                 dst_path,
+                 metadata_path):
     base_cmd = """otbcli_OrthoRectification \
       -io.in {src} \
       -io.out {dst} uint16 \
       -outputs.mode auto \
       -elev.geoid {geoid_path} \
-      {elev_dem}
+      -elev.dem {dem_path}
     """
     metadata = extract_projection_metadata(metadata_path)
 
-    elev_dem = '-elev.dem {}'.format(dem_path) if dem_path else ''
+    if not geoid_path:
+        geoid_path = GEOID_PATH
+    if not dem_path:
+        dem_path = DEM_PATH
+
     cmd = base_cmd.format(src=src_path,
                           dst=dst_path,
                           geoid_path=GEOID_PATH,
-                          elev_dem=elev_dem,
+                          dem_path=dem_path,
                           **metadata)
     run_command(cmd)

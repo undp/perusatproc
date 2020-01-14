@@ -24,11 +24,12 @@ _logger = logging.getLogger(__name__)
 
 
 def process_image(rpc_metadata_path=None,
+                  dem_path=None,
+                  geoid_path=None,
                   *,
                   src_path,
                   dst_path,
-                  metadata_path,
-                  dem_path):
+                  metadata_path):
 
     with tempfile.NamedTemporaryFile(suffix='.tif') as tempf2:
         with tempfile.NamedTemporaryFile(suffix='.tif') as tempf1:
@@ -91,6 +92,7 @@ def parse_args(args):
                         help="path to RPC metadata XML file " + \
                              "(default: get path from DIMAP metadata file)")
     parser.add_argument("--dem", help="path to directory containing DEM files")
+    parser.add_argument("--geoid", help="path to geoid file")
 
     return parser.parse_args(args)
 
@@ -121,7 +123,8 @@ def main(args):
                   dst_path=args.dst,
                   metadata_path=args.metadata,
                   rpc_metadata_path=args.rpc_metadata,
-                  dem_path=args.dem)
+                  dem_path=args.dem,
+                  geoid_path=args.geoid)
 
 
 def run():
