@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Given a path to a PeruSat-1 product, this script peforms all required steps to
-form a single calibrated, orthorectified and pansharpened image.
-
-Final output can be a virtual raster or a tiff file.
+This script bundles a pancromatic (P) and multispectral (MS) image to form a
+pansharpened image.
 
 """
 
+from glob import glob
 import argparse
-import sys
 import logging
+import os
+import sys
+import tempfile
 
 from perusatproc import __version__
-
-import subprocess
-import xmltodict
-import tempfile
-import rasterio
-import os
-from glob import glob
-from datetime import datetime
+#from perusatproc.pansharpen import pansharpen_image
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
@@ -28,28 +22,9 @@ __license__ = "mit"
 _logger = logging.getLogger(__name__)
 
 
-def process_image(*, src, dst):
+def pansharpen(src, dst):
     # TODO ...
     pass
-
-
-def process_product(src, dst):
-    volumes = glob(os.path.join(src, 'VOL_*'))
-    _logger.info("Num. Volumes: {}".format(len(volumes)))
-
-    os.makedirs(dst, exist_ok=True)
-
-    for volume in volumes:
-        ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
-        p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
-
-        for src_path in [ms_img]:
-            name, ext = os.path.splitext(os.path.basename(src_path))
-            dst_path = os.path.join(dst, name + ext)
-            if not os.path.exists(dst_path):
-                process_image(src=src_path, dst=dst_path)
-
-    # TODO ...
 
 
 def parse_args(args):
@@ -83,13 +58,8 @@ def parse_args(args):
                         action="store_const",
                         const=logging.DEBUG)
 
-    parser.add_argument("src", help="path to directory containing product")
+    parser.add_argument("src", help="path to input image")
     parser.add_argument("dst", help="path to output image")
-
-    parser.add_argument("-co",
-                        "--create-options",
-                        default="",
-                        help="GDAL create options")
 
     return parser.parse_args(args)
 
@@ -116,10 +86,9 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    if args.mode == 'image':
-        process_image(args.src, args.dst, metadata=args.dst)
-    else:
-        process_product(args.src, args.dst)
+    _logger.debug("Args: %s", args)
+
+    pansharpen(args.src, args.dst)
 
 
 def run():

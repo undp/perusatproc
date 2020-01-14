@@ -10,6 +10,13 @@ __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
 
+RPC_COEFF_PAIRS = [
+    ('samp_num_coeffs', 'COL_NUM_COEFF'),
+    ('samp_den_coeffs', 'COL_DEN_COEFF'),
+    ('line_num_coeffs', 'ROW_NUM_COEFF'),
+    ('line_den_coeffs', 'ROW_DEN_COEFF'),
+]
+
 
 def extract_calibration_metadata(metadata_path):
     with open(metadata_path) as f:
@@ -90,3 +97,47 @@ def extract_projection_metadata(metadata_path):
                 uly=maxy,
                 lrx=maxx,
                 lry=miny)
+
+
+def extract_rpc_metadata(metadata_path):
+    with open(metadata_path) as f:
+        body = xmltodict.parse(f.read())
+
+    doc = body['Rpc_Document']
+
+    inverse_model = doc['Inverse_Model']
+    err_bias = float(inverse_model['ERR_BIAS_COL'])
+    err_rand = -1.0  # unknown?
+
+    coeffs = dict()
+    for key, xml_key in RPC_COEFF_PAIRS:
+        coeffs[key] = [
+            float(inverse_model['{}_{}'.format(xml_key, v)])
+            for v in range(1, 21)
+        ]
+
+    validity = doc['Validity']
+    lon_scale = float(validity['LON_SCALE'])
+    lon_offset = float(validity['LON_OFF'])
+    lat_scale = float(validity['LAT_SCALE'])
+    lat_offset = float(validity['LAT_OFF'])
+    height_scale = float(validity['HEIGHT_SCALE'])
+    height_offset = float(validity['HEIGHT_OFF'])
+    samp_scale = float(validity['COL_SCALE'])
+    samp_offset = float(validity['COL_OFF'])
+    line_scale = float(validity['ROW_SCALE'])
+    line_offset = float(validity['ROW_OFF'])
+
+    return dict(err_bias=err_bias,
+                err_rand=err_rand,
+                lon_scale=lon_scale,
+                lon_offset=lon_offset,
+                lat_scale=lat_scale,
+                lat_offset=lat_offset,
+                height_scale=height_scale,
+                height_offset=height_offset,
+                samp_scale=samp_scale,
+                samp_offset=samp_offset,
+                line_scale=line_scale,
+                line_offset=line_offset,
+                **coeffs)
