@@ -14,7 +14,7 @@ import sys
 import tempfile
 
 from perusatproc import __version__
-from perusatproc.orthorectification import reproject, add_rpc_tags, orthorectify
+from perusatproc.orthorectification import add_rpc_tags, orthorectify
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
@@ -28,26 +28,17 @@ def process_image(rpc_metadata_path=None,
                   geoid_path=None,
                   *,
                   src_path,
-                  dst_path,
-                  metadata_path):
+                  dst_path):
 
-    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf2:
-        with tempfile.NamedTemporaryFile(suffix='.tif') as tempf1:
-            _logger.info("Reproject %s and write %s", src_path, tempf1.name)
-            reproject(src_path=src_path,
-                      dst_path=tempf1.name,
-                      metadata_path=metadata_path)
+    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
+        _logger.info("Add RPC tags from %s and write %s", src_path, tempf.name)
+        add_rpc_tags(src_path=src_path,
+                     dst_path=tempf.name,
+                     metadata_path=rpc_metadata_path)
 
-            _logger.info("Add RPC tags from %s and write %s", tempf1.name,
-                         tempf2.name)
-            add_rpc_tags(src_path=tempf1.name,
-                         dst_path=tempf2.name,
-                         metadata_path=rpc_metadata_path)
-
-        _logger.info("Orthorectify %s and write %s", tempf2.name, dst_path)
-        orthorectify(src_path=tempf2.name,
+        _logger.info("Orthorectify %s and write %s", tempf.name, dst_path)
+        orthorectify(src_path=tempf.name,
                      dst_path=dst_path,
-                     metadata_path=metadata_path,
                      dem_path=dem_path)
 
 
@@ -84,15 +75,13 @@ def parse_args(args):
 
     parser.add_argument("src", help="path to input image")
     parser.add_argument("dst", help="path to output image")
-    parser.add_argument("-m",
-                        "--metadata",
+    parser.add_argument("-m", "--metadata",
                         required=True,
-                        help="path to metadata DIMAP XML file")
-    parser.add_argument("--rpc-metadata",
-                        help="path to RPC metadata XML file " + \
-                             "(default: get path from DIMAP metadata file)")
-    parser.add_argument("--dem", help="path to directory containing DEM files")
-    parser.add_argument("--geoid", help="path to geoid file")
+                        help="path to RPC metadata XML file")
+    parser.add_argument("--dem",
+                        help="path to directory containing DEM files (defaults to SRTM 1-arc tiles)")
+    parser.add_argument("--geoid",
+                        help="path to geoid file (defaults to EGM96 geoid)")
 
     return parser.parse_args(args)
 
@@ -121,8 +110,7 @@ def main(args):
 
     process_image(src_path=args.src,
                   dst_path=args.dst,
-                  metadata_path=args.metadata,
-                  rpc_metadata_path=args.rpc_metadata,
+                  rpc_metadata_path=args.metadata,
                   dem_path=args.dem,
                   geoid_path=args.geoid)
 

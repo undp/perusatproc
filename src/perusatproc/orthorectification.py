@@ -2,11 +2,7 @@
 
 import logging
 import os
-import struct
 
-from functools import reduce
-
-from osgeo import gdal, gdalconst
 import rasterio
 
 from perusatproc.metadata import extract_projection_metadata, extract_rpc_metadata
@@ -42,44 +38,8 @@ RPC_COEFF_KEYS = [
 ]
 
 
-def reproject(*, src_path, dst_path, metadata_path):
-    metadata = extract_projection_metadata(metadata_path)
-
-    with rasterio.open(src_path) as ds:
-        profile = ds.profile.copy()
-
-        transform = rasterio.transform.from_bounds(west=metadata['ulx'],
-                                                   south=metadata['lry'],
-                                                   east=metadata['lrx'],
-                                                   north=metadata['uly'],
-                                                   width=metadata['sizex'],
-                                                   height=metadata['sizey'])
-
-        profile.update(transform=transform, crs='epsg:4326')
-        with rasterio.open(dst_path, 'w', **profile) as wds:
-            wds.write(ds.read())
-
-
-def encode_double(value):
-    return struct.pack("<d", value)
-
-
-def encode_rpc_tag(metadata):
-    res = None
-    for key in RPC_COEFF_KEYS:
-        value = metadata[key]
-        if isinstance(value, list):
-            enc_values = [encode_double(v) for v in value]
-            encoded_value = reduce((lambda x, y: x + y), enc_values)
-        else:
-            encoded_value = encode_double(value)
-        res = res + encoded_value if res else encoded_value
-    return res
-
-
 def add_rpc_tags(*, src_path, dst_path, metadata_path):
     metadata = extract_rpc_metadata(metadata_path)
-    tag_value = encode_rpc_tag(metadata)
 
     keys = [
         ('ERR_BIAS', 'err_bias'),
@@ -105,7 +65,6 @@ def add_rpc_tags(*, src_path, dst_path, metadata_path):
 
     with rasterio.open(src_path) as src:
         with rasterio.open(dst_path, 'w', **src.profile) as dst:
-            #dst.update_tags({'RPCCoefficientTag', tag_value})
             dst.write(src.read())
             dst.update_tags(ns='RPC', **tags)
 
@@ -114,8 +73,7 @@ def orthorectify(dem_path=None,
                  geoid_path=None,
                  *,
                  src_path,
-                 dst_path,
-                 metadata_path):
+                 dst_path):
     base_cmd = """otbcli_OrthoRectification \
       -io.in \"{src}?&skipcarto=true\" \
       -io.out {dst} uint16 \
@@ -123,7 +81,6 @@ def orthorectify(dem_path=None,
       -elev.geoid {geoid_path} \
       -elev.dem {dem_path}
     """
-    metadata = extract_projection_metadata(metadata_path)
 
     if not geoid_path:
         geoid_path = GEOID_PATH
@@ -133,6 +90,5 @@ def orthorectify(dem_path=None,
     cmd = base_cmd.format(src=src_path,
                           dst=dst_path,
                           geoid_path=GEOID_PATH,
-                          dem_path=dem_path,
-                          **metadata)
+                          dem_path=dem_path)
     run_command(cmd)
