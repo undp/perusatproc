@@ -47,6 +47,7 @@ def reproject(*, src_path, dst_path, metadata_path):
 
     with rasterio.open(src_path) as ds:
         profile = ds.profile.copy()
+
         transform = rasterio.transform.from_bounds(west=metadata['ulx'],
                                                    south=metadata['lry'],
                                                    east=metadata['lrx'],
@@ -116,7 +117,7 @@ def orthorectify(dem_path=None,
                  dst_path,
                  metadata_path):
     base_cmd = """otbcli_OrthoRectification \
-      -io.in {src} \
+      -io.in \"{src}?&skipcarto=true\" \
       -io.out {dst} uint16 \
       -outputs.mode auto \
       -elev.geoid {geoid_path} \
