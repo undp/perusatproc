@@ -25,11 +25,11 @@ Modes
 Scripts
 -------
 
+`perusat_calibrate`: Calibrates image to top-of-atmosphere (ToA).
+
 `perusat_orthorectify`: Adds projection and RPC tags to an image from its
 metadata files, and them orthorectifies it using the RPC data and a DEM image.
 If no DEM is provided, a DEM from SRTM is used (1-arc second / 30m aprox GSD).
-
-`perusat_calibrate`: Calibrates image to top-of-atmosphere (ToA).
 
 `perusat_pansharpen`: Bundles a pancromatic (P) and multispectral (MS) image to
 form a pansharpened image.
