@@ -152,7 +152,7 @@ def main(args):
     if args.mode == 'image':
         process_image(args.src, args.dst, metadata=args.dst)
     else:
-    process_product(args.src, args.dst)
+        process_product(args.src, args.dst)
 
 
 def run():
