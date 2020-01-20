@@ -20,4 +20,10 @@ except VersionConflict:
 
 
 if __name__ == "__main__":
-    setup(use_pyscaffold=True)
+    setup(
+        use_pyscaffold=True,
+        data_files=[
+            ('perusatproc/data/dem', ['data/dem/S12W077.hgt','data/dem/S12W078.hgt','data/dem/S13W077.hgt','data/dem/S13W078.hgt']),
+            ('perusatproc/data', ['data/egm96.grd']),
+        ]
+    )

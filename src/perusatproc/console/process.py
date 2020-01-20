@@ -12,6 +12,8 @@ import sys
 import logging
 
 from perusatproc import __version__
+from perusatproc import calibration, orthorectification, pansharpening
+from perusatproc.util import run_command
 
 import subprocess
 import xmltodict
@@ -29,8 +31,32 @@ _logger = logging.getLogger(__name__)
 
 
 def process_image(*, src, dst):
-    # TODO ...
-    pass
+
+    name, ext = os.path.splitext(os.path.basename(src))
+    dirname = os.path.dirname(src)
+    dim_xml = glob(os.path.join(dirname, 'DIM_*.XML'))[0]
+    rpc_xml = glob(os.path.join(dirname, 'RPC_*.XML'))[0]
+
+    os.makedirs(os.path.join(dst, 'calibarate'), exist_ok=True)
+    os.makedirs(os.path.join(dst, 'orthorectify'), exist_ok=True)
+    calibration_dst_path = os.path.join(dst, 'calibarate', name + ext)
+    orthorectify_dst_path = os.path.join(dst, 'orthorectify', name + ext)
+
+    calibration.calibrate(
+        src_path=src, 
+        dst_path=calibration_dst_path,
+        metadata_path=os.path.join(dirname, dim_xml)
+    )
+
+    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
+        _logger.info("Add RPC tags from %s and write %s", calibration_dst_path, tempf.name)
+        orthorectification.add_rpc_tags(src_path=calibration_dst_path,
+                     dst_path=tempf.name,
+                     metadata_path=os.path.join(dirname, rpc_xml))
+
+        _logger.info("Orthorectify %s and write %s", tempf.name, orthorectify_dst_path)
+        orthorectification.orthorectify(src_path=tempf.name,
+                     dst_path=orthorectify_dst_path,)
 
 
 def process_product(src, dst):
@@ -39,17 +65,24 @@ def process_product(src, dst):
 
     os.makedirs(dst, exist_ok=True)
 
+    gdal_imgs = []
+
     for volume in volumes:
         ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
         p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
+        process_image(src=ms_img, dst=volume)
+        process_image(src=p_img, dst=volume)
+        pansharpening.pansharpen(
+            inp = os.path.join(volume, 'orthorectify', os.path.basename(p_img)), 
+            inxs = os.path.join(volume, 'orthorectify', os.path.basename(ms_img)), 
+            out = os.path.join(volume, '{}.tif'.format(volume))
+        )
+        gdal_imgs.append(os.path.join(volume, '{}.tif'.format(volume)))
 
-        for src_path in [ms_img]:
-            name, ext = os.path.splitext(os.path.basename(src_path))
-            dst_path = os.path.join(dst, name + ext)
-            if not os.path.exists(dst_path):
-                process_image(src=src_path, dst=dst_path)
-
-    # TODO ...
+    run_command("gdal_merge.py -o {out} {inputs}".format(
+        out=os.path.join(dst, 'result.tif'),
+        inputs=" ".join(gdal_imgs)
+    ))
 
 
 def parse_args(args):
@@ -83,8 +116,8 @@ def parse_args(args):
                         action="store_const",
                         const=logging.DEBUG)
 
-    parser.add_argument("src", help="path to directory containing product")
-    parser.add_argument("dst", help="path to output image")
+    parser.add_argument("-src", help="path to directory containing product")
+    parser.add_argument("-dst", help="path to output image")
 
     parser.add_argument("-co",
                         "--create-options",
@@ -119,7 +152,7 @@ def main(args):
     if args.mode == 'image':
         process_image(args.src, args.dst, metadata=args.dst)
     else:
-        process_product(args.src, args.dst)
+    process_product(args.src, args.dst)
 
 
 def run():

@@ -14,8 +14,7 @@ __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
 
-DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..',
-                         '..', 'data')
+DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)),'data')
 GEOID_PATH = os.path.join(DATA_PATH, 'egm96.grd')
 DEM_PATH = os.path.join(DATA_PATH, 'dem')
 RPC_COEFF_KEYS = [
