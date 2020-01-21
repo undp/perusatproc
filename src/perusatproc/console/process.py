@@ -64,20 +64,22 @@ def process_product(src, dst):
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
     os.makedirs(dst, exist_ok=True)
+    os.makedirs(os.path.join(dst, 'pansharpening') , exist_ok=True)
 
     gdal_imgs = []
 
     for volume in volumes:
         ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
         p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
-        process_image(src=ms_img, dst=volume)
-        process_image(src=p_img, dst=volume)
+        #process_image(src=ms_img, dst=volume)
+        #process_image(src=p_img, dst=volume)
+        pansharpening_dst = os.path.join(dst, 'pansharpening', '{}.tif'.format(os.path.basename(volume)))
         pansharpening.pansharpen(
             inp = os.path.join(volume, 'orthorectify', os.path.basename(p_img)), 
             inxs = os.path.join(volume, 'orthorectify', os.path.basename(ms_img)), 
-            out = os.path.join(volume, '{}.tif'.format(volume))
+            out = pansharpening_dst
         )
-        gdal_imgs.append(os.path.join(volume, '{}.tif'.format(volume)))
+        gdal_imgs.append(pansharpening_dst)
 
     run_command("gdal_merge.py -o {out} {inputs}".format(
         out=os.path.join(dst, 'result.tif'),
@@ -149,10 +151,10 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    if args.mode == 'image':
-        process_image(args.src, args.dst, metadata=args.dst)
-    else:
-        process_product(args.src, args.dst)
+    #if args.mode == 'image':
+    #    process_image(args.src, args.dst, metadata=args.dst)
+    #else:
+    process_product(args.src, args.dst)
 
 
 def run():
