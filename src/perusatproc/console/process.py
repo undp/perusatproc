@@ -81,10 +81,14 @@ def process_product(src, dst):
         )
         gdal_imgs.append(pansharpening_dst)
 
-    run_command("gdal_merge.py -o {out} {inputs}".format(
-        out=os.path.join(dst, 'result.tif'),
+    merge_out = os.path.join(dst, '{}.tif'.format(os.path.basename(src)))
+    print(merge_out)
+    cmd = "gdal_merge.py -o {out} {inputs}".format(
+        out=merge_out,
         inputs=" ".join(gdal_imgs)
-    ))
+    )
+    print(cmd)
+    run_command(cmd)
 
 
 def parse_args(args):
