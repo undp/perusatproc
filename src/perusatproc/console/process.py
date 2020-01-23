@@ -71,8 +71,8 @@ def process_product(src, dst):
     for volume in volumes:
         ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
         p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
-        #process_image(src=ms_img, dst=volume)
-        #process_image(src=p_img, dst=volume)
+        process_image(src=ms_img, dst=volume)
+        process_image(src=p_img, dst=volume)
         pansharpening_dst = os.path.join(dst, 'pansharpening', '{}.tif'.format(os.path.basename(volume)))
         pansharpening.pansharpen(
             inp = os.path.join(volume, 'orthorectify', os.path.basename(p_img)), 
@@ -81,10 +81,8 @@ def process_product(src, dst):
         )
         gdal_imgs.append(pansharpening_dst)
 
-    merge_out = os.path.join(dst, '{}.tif'.format(os.path.basename(src)))
-    print(merge_out)
     cmd = "gdal_merge.py -o {out} {inputs}".format(
-        out=merge_out,
+        out=os.path.join(dst, '{}.tif'.format(os.path.basename(src))),
         inputs=" ".join(gdal_imgs)
     )
     print(cmd)
