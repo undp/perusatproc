@@ -13,21 +13,13 @@ import sys
 import tempfile
 
 from perusatproc import __version__
-#from perusatproc.pansharpen import pansharpen_image
+from perusatproc.pansharpen import pansharpen_image
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
 __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
-
-
-def pansharpen(inp, inxs, out):
-    base_cmd = "otbcli_BundleToPerfectSensor -inp {inp} -inxs {inxs} -out {out}"
-
-    cmd = base_cmd.format(inp=inp, inxs=inxs, out=out)
-
-    run_command(cmd)
 
 
 def parse_args(args):
@@ -91,7 +83,7 @@ def main(args):
 
     _logger.debug("Args: %s", args)
 
-    pansharpen(args.src, args.dst)
+    pansharpen_image(args.src, args.dst)
 
 
 def run():
