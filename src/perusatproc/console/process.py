@@ -42,21 +42,24 @@ def process_image(*, src, dst):
     calibration_dst_path = os.path.join(dst, 'calibarate', name + ext)
     orthorectify_dst_path = os.path.join(dst, 'orthorectify', name + ext)
 
-    calibration.calibrate(
-        src_path=src, 
-        dst_path=calibration_dst_path,
-        metadata_path=os.path.join(dirname, dim_xml)
-    )
+    calibration.calibrate(src_path=src,
+                          dst_path=calibration_dst_path,
+                          metadata_path=os.path.join(dirname, dim_xml))
 
     with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
-        _logger.info("Add RPC tags from %s and write %s", calibration_dst_path, tempf.name)
+        _logger.info("Add RPC tags from %s and write %s", calibration_dst_path,
+                     tempf.name)
         orthorectification.add_rpc_tags(src_path=calibration_dst_path,
-                     dst_path=tempf.name,
-                     metadata_path=os.path.join(dirname, rpc_xml))
+                                        dst_path=tempf.name,
+                                        metadata_path=os.path.join(
+                                            dirname, rpc_xml))
 
-        _logger.info("Orthorectify %s and write %s", tempf.name, orthorectify_dst_path)
-        orthorectification.orthorectify(src_path=tempf.name,
-                     dst_path=orthorectify_dst_path,)
+        _logger.info("Orthorectify %s and write %s", tempf.name,
+                     orthorectify_dst_path)
+        orthorectification.orthorectify(
+            src_path=tempf.name,
+            dst_path=orthorectify_dst_path,
+        )
 
 
 def process_product(src, dst):
@@ -64,7 +67,7 @@ def process_product(src, dst):
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
     os.makedirs(dst, exist_ok=True)
-    os.makedirs(os.path.join(dst, 'pansharpening') , exist_ok=True)
+    os.makedirs(os.path.join(dst, 'pansharpening'), exist_ok=True)
 
     gdal_imgs = []
 
@@ -73,19 +76,18 @@ def process_product(src, dst):
         p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
         process_image(src=ms_img, dst=volume)
         process_image(src=p_img, dst=volume)
-        pansharpening_dst = os.path.join(dst, 'pansharpening', '{}.tif'.format(os.path.basename(volume)))
-        pansharpening.pansharpen(
-            inp = os.path.join(volume, 'orthorectify', os.path.basename(p_img)), 
-            inxs = os.path.join(volume, 'orthorectify', os.path.basename(ms_img)), 
-            out = pansharpening_dst
-        )
+        pansharpening_dst = os.path.join(
+            dst, 'pansharpening', '{}.tif'.format(os.path.basename(volume)))
+        pansharpening.pansharpen(inp=os.path.join(volume, 'orthorectify',
+                                                  os.path.basename(p_img)),
+                                 inxs=os.path.join(volume, 'orthorectify',
+                                                   os.path.basename(ms_img)),
+                                 out=pansharpening_dst)
         gdal_imgs.append(pansharpening_dst)
 
-    cmd = "gdal_merge.py -o {out} {inputs}".format(
-        out=os.path.join(dst, '{}.tif'.format(os.path.basename(src))),
-        inputs=" ".join(gdal_imgs)
-    )
-    print(cmd)
+    cmd = "gdal_merge.py -o {out} {inputs}".format(out=os.path.join(
+        dst, '{}.tif'.format(os.path.basename(src))),
+                                                   inputs=" ".join(gdal_imgs))
     run_command(cmd)
 
 
