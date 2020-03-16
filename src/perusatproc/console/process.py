@@ -29,6 +29,8 @@ __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
 
+DEFAULT_TILE_SIZE = 2**14
+
 
 def process_image(*, src, dst):
 
@@ -62,7 +64,16 @@ def process_image(*, src, dst):
         )
 
 
-def process_product(src, dst):
+def retile_images(inputs, outdir, tile_size=DEFAULT_TILE_SIZE):
+    cmd = 'gdal_retile.py -co COMPRESS=DEFLATE -co TILED=YES ' \
+        '-ps {tile_size} {tile_size} ' \
+        '-targetDir {outdir} ' \
+        '{inputs}'.format(tile_size=tile_size,
+        outdir=outdir,
+        inputs=inputs.join(' '))
+
+
+def process_product(src, dst, tile_size=DEFAULT_TILE_SIZE):
     volumes = glob(os.path.join(src, 'VOL_*'))
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
@@ -85,10 +96,7 @@ def process_product(src, dst):
                                  out=pansharpening_dst)
         gdal_imgs.append(pansharpening_dst)
 
-    cmd = "gdal_merge.py -o {out} {inputs}".format(out=os.path.join(
-        dst, '{}.tif'.format(os.path.basename(src))),
-                                                   inputs=" ".join(gdal_imgs))
-    run_command(cmd)
+    retile_images(inputs=gdal_imgs, outdir=dst, tile_size=tile_size)
 
 
 def parse_args(args):
@@ -100,10 +108,10 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(
+    parser = argparse.DefaultsArgumentParser(
         description=
-        "Perform radiometric calibration from Level 2A to Top-of-Atmosphere (ToA)"
-    )
+        "Process a PeruSat-1 product into a set of calibrated, orthorectified and pansharpened tiles",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--version",
                         action="version",
@@ -122,8 +130,14 @@ def parse_args(args):
                         action="store_const",
                         const=logging.DEBUG)
 
-    parser.add_argument("-src", help="path to directory containing product")
-    parser.add_argument("-dst", help="path to output image")
+    parser.add_argument("src", help="path to directory containing product")
+    parser.add_argument("dst",
+                        help="path to output directory containing tiles")
+
+    parser.add_argument("--tile-size",
+                        type=int,
+                        default=DEFAULT_TILE_SIZE,
+                        help="tile size (in pixels)")
 
     parser.add_argument("-co",
                         "--create-options",
@@ -158,7 +172,7 @@ def main(args):
     #if args.mode == 'image':
     #    process_image(args.src, args.dst, metadata=args.dst)
     #else:
-    process_product(args.src, args.dst)
+    process_product(args.src, args.dst, tile_size=args.tile_size)
 
 
 def run():
