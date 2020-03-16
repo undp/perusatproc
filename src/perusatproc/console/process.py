@@ -113,9 +113,14 @@ def process_product(src,
         gdal_imgs.append(pansharpening_dst)
 
     name, _ = os.path.splitext(os.path.basename(src))
-    vrt_path = os.path.join(dst, '{}.vrt'.format(name))
+    vrt_path = os.path.join(dst, 'pansharpening', '{}.vrt'.format(name))
     build_virtual_raster(inputs=gdal_imgs, dst=vrt_path)
+
     retile_images(src=vrt_path, outdir=dst, tile_size=tile_size)
+
+    tile_paths = glob(os.path.join(dst, '*.tif'))
+    tiles_vrt_path = os.path.join(dst, '{}.vrt'.format(name))
+    build_virtual_raster(inputs=tile_paths, dst=tiles_vrt_path)
 
 
 def parse_args(args):
