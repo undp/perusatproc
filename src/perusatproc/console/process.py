@@ -64,13 +64,19 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
                                         geoid_path=geoid_path)
 
 
-def retile_images(inputs, outdir, tile_size=DEFAULT_TILE_SIZE):
+def build_virtual_raster(inputs, dst):
+    cmd = 'gdalbuildvrt {dst} {inputs}'.format(dst=dst, inputs=' '.join(inputs))
+    run_command(cmd)
+
+
+def retile_images(src, outdir, tile_size=DEFAULT_TILE_SIZE):
     cmd = 'gdal_retile.py -co COMPRESS=DEFLATE -co TILED=YES ' \
         '-ps {tile_size} {tile_size} ' \
         '-targetDir {outdir} ' \
-        '{inputs}'.format(tile_size=tile_size,
+        '{src}'.format(tile_size=tile_size,
         outdir=outdir,
-        inputs=inputs.join(' '))
+        src=src)
+    run_command(cmd)
 
 
 def process_product(src,
@@ -106,7 +112,10 @@ def process_product(src,
                                  out=pansharpening_dst)
         gdal_imgs.append(pansharpening_dst)
 
-    retile_images(inputs=gdal_imgs, outdir=dst, tile_size=tile_size)
+    name, _ = os.path.splitext(os.path.basename(src))
+    vrt_path = os.path.join(dst, '{}.vrt'.format(name))
+    build_virtual_raster(inputs=gdal_imgs, dst=vrt_path)
+    retile_images(src=vrt_path, outdir=dst, tile_size=tile_size)
 
 
 def parse_args(args):
