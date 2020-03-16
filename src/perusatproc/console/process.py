@@ -32,7 +32,7 @@ _logger = logging.getLogger(__name__)
 DEFAULT_TILE_SIZE = 2**14
 
 
-def process_image(*, src, dst):
+def process_image(dem_path=None, geoid_path=None, *, src, dst):
 
     name, ext = os.path.splitext(os.path.basename(src))
     dirname = os.path.dirname(src)
@@ -58,10 +58,10 @@ def process_image(*, src, dst):
 
         _logger.info("Orthorectify %s and write %s", tempf.name,
                      orthorectify_dst_path)
-        orthorectification.orthorectify(
-            src_path=tempf.name,
-            dst_path=orthorectify_dst_path,
-        )
+        orthorectification.orthorectify(src_path=tempf.name,
+                                        dst_path=orthorectify_dst_path,
+                                        dem_path=dem_path,
+                                        geoid_path=geoid_path)
 
 
 def retile_images(inputs, outdir, tile_size=DEFAULT_TILE_SIZE):
@@ -73,7 +73,11 @@ def retile_images(inputs, outdir, tile_size=DEFAULT_TILE_SIZE):
         inputs=inputs.join(' '))
 
 
-def process_product(src, dst, tile_size=DEFAULT_TILE_SIZE):
+def process_product(src,
+                    dst,
+                    tile_size=DEFAULT_TILE_SIZE,
+                    dem_path=None,
+                    geoid_path=None):
     volumes = glob(os.path.join(src, 'VOL_*'))
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
@@ -85,8 +89,14 @@ def process_product(src, dst, tile_size=DEFAULT_TILE_SIZE):
     for volume in volumes:
         ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
         p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
-        process_image(src=ms_img, dst=volume)
-        process_image(src=p_img, dst=volume)
+        process_image(src=ms_img,
+                      dst=volume,
+                      dem_path=dem_path,
+                      geoid_path=geoid_path)
+        process_image(src=p_img,
+                      dst=volume,
+                      dem_path=dem_path,
+                      geoid_path=geoid_path)
         pansharpening_dst = os.path.join(
             dst, 'pansharpening', '{}.tif'.format(os.path.basename(volume)))
         pansharpening.pansharpen(inp=os.path.join(volume, 'orthorectify',
@@ -139,6 +149,14 @@ def parse_args(args):
                         default=DEFAULT_TILE_SIZE,
                         help="tile size (in pixels)")
 
+    parser.add_argument(
+        "--dem",
+        help=
+        "path to directory containing DEM files (defaults to SRTM 1-arc tiles)"
+    )
+    parser.add_argument("--geoid",
+                        help="path to geoid file (defaults to EGM96 geoid)")
+
     parser.add_argument("-co",
                         "--create-options",
                         default="",
@@ -169,10 +187,11 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    #if args.mode == 'image':
-    #    process_image(args.src, args.dst, metadata=args.dst)
-    #else:
-    process_product(args.src, args.dst, tile_size=args.tile_size)
+    process_product(args.src,
+                    args.dst,
+                    tile_size=args.tile_size,
+                    dem_path=args.dem,
+                    geoid_path=args.geoid)
 
 
 def run():

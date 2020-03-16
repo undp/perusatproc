@@ -39,7 +39,8 @@ def process_image(rpc_metadata_path=None,
         _logger.info("Orthorectify %s and write %s", tempf.name, dst_path)
         orthorectify(src_path=tempf.name,
                      dst_path=dst_path,
-                     dem_path=dem_path)
+                     dem_path=dem_path,
+                     geoid_path=geoid_path)
 
 
 def parse_args(args):
@@ -75,11 +76,15 @@ def parse_args(args):
 
     parser.add_argument("src", help="path to input image")
     parser.add_argument("dst", help="path to output image")
-    parser.add_argument("-m", "--metadata",
+    parser.add_argument("-m",
+                        "--metadata",
                         required=True,
                         help="path to RPC metadata XML file")
-    parser.add_argument("--dem",
-                        help="path to directory containing DEM files (defaults to SRTM 1-arc tiles)")
+    parser.add_argument(
+        "--dem",
+        help=
+        "path to directory containing DEM files (defaults to SRTM 1-arc tiles)"
+    )
     parser.add_argument("--geoid",
                         help="path to geoid file (defaults to EGM96 geoid)")
 
