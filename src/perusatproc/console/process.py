@@ -108,7 +108,7 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.DefaultsArgumentParser(
+    parser = argparse.ArgumentParser(
         description=
         "Process a PeruSat-1 product into a set of calibrated, orthorectified and pansharpened tiles",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
