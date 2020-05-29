@@ -15,4 +15,5 @@
 # numpy==1.13.3
 # scipy==1.0
 #
+rasterio==1.1.4
 xmltodict==0.12.0
