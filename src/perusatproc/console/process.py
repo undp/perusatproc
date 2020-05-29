@@ -70,7 +70,7 @@ def build_virtual_raster(inputs, dst):
 
 
 def retile_images(src, outdir, tile_size=DEFAULT_TILE_SIZE):
-    cmd = 'gdal_retile.py -co COMPRESS=DEFLATE -co TILED=YES ' \
+    cmd = 'gdal_retile.py -co TILED=YES ' \
         '-ps {tile_size} {tile_size} ' \
         '-targetDir {outdir} ' \
         '{src}'.format(tile_size=tile_size,
