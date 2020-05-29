@@ -65,7 +65,8 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
 
 
 def build_virtual_raster(inputs, dst):
-    cmd = 'gdalbuildvrt {dst} {inputs}'.format(dst=dst, inputs=' '.join(inputs))
+    cmd = 'gdalbuildvrt {dst} {inputs}'.format(dst=dst,
+                                               inputs=' '.join(inputs))
     run_command(cmd)
 
 
