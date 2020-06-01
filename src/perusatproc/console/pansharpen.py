@@ -13,7 +13,7 @@ import sys
 import tempfile
 
 from perusatproc import __version__
-from perusatproc.pansharpen import pansharpen_image
+from perusatproc.pansharpening import pansharpen
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
@@ -83,7 +83,7 @@ def main(args):
 
     _logger.debug("Args: %s", args)
 
-    pansharpen_image(args.src, args.dst)
+    pansharpen(args.src, args.dst)
 
 
 def run():
