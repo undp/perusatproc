@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Damián Silvani <munshkr@gmail.com>
+* Damián Silvani <damian@dymaxionlabs.com>
