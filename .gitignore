@@ -49,3 +49,5 @@ MANIFEST
 .venv*/
 
 data/dem/*.omd
+
+/.vscode/
