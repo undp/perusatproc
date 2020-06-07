@@ -2,6 +2,7 @@
 
 import xmltodict
 import logging
+import os
 from datetime import datetime
 
 __author__ = "Damián Silvani"

@@ -11,7 +11,6 @@ import argparse
 import logging
 import os
 import sys
-import tempfile
 
 from perusatproc import __version__
 from perusatproc.orthorectification import add_rpc_tags, orthorectify
@@ -30,17 +29,21 @@ def process_image(rpc_metadata_path=None,
                   src_path,
                   dst_path):
 
-    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
-        _logger.info("Add RPC tags from %s and write %s", src_path, tempf.name)
-        add_rpc_tags(src_path=src_path,
-                     dst_path=tempf.name,
-                     metadata_path=rpc_metadata_path)
+    name, ext = os.path.splitext(os.path.basename(src_path))
+    temp_name = os.path.join(os.path.dirname(src_path), f'{name}_rpc{ext}')
 
-        _logger.info("Orthorectify %s and write %s", tempf.name, dst_path)
-        orthorectify(src_path=tempf.name,
-                     dst_path=dst_path,
-                     dem_path=dem_path,
-                     geoid_path=geoid_path)
+    _logger.info("Add RPC tags from %s and write %s", src_path, temp_name)
+    add_rpc_tags(src_path=src_path,
+                 dst_path=temp_name,
+                 metadata_path=rpc_metadata_path)
+
+    _logger.info("Orthorectify %s and write %s", temp_name, dst_path)
+    orthorectify(src_path=temp_name,
+                 dst_path=dst_path,
+                 dem_path=dem_path,
+                 geoid_path=geoid_path)
+
+    os.unlink(temp_name)
 
 
 def parse_args(args):

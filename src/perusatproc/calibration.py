@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 import tempfile
 
 from perusatproc.metadata import extract_calibration_metadata
@@ -33,21 +34,24 @@ def calibrate(*, src_path, dst_path, metadata_path):
     """
     metadata = extract_calibration_metadata(metadata_path)
 
-    with tempfile.NamedTemporaryFile(suffix='.txt') as gf:
-        for k in ('gains', 'biases'):
-            line = "{}\n".format(" : ".join(str(v) for v in metadata[k]))
-            gf.write(line.encode())
-            gf.flush()
+    gf = tempfile.NamedTemporaryFile(suffix='.txt', delete=False)
+    for k in ('gains', 'biases'):
+        line = "{}\n".format(" : ".join(str(v) for v in metadata[k]))
+        gf.write(line.encode())
+    gf.close()
 
-        with tempfile.NamedTemporaryFile(suffix='.txt') as sf:
-            line = "{}\n".format(" : ".join(
-                str(v) for v in metadata['solar_irradiances']))
-            sf.write(line.encode())
-            sf.flush()
+    sf = tempfile.NamedTemporaryFile(suffix='.txt', delete=False)
+    line = "{}\n".format(" : ".join(
+        str(v) for v in metadata['solar_irradiances']))
+    sf.write(line.encode())
+    sf.close()
 
-            cmd = base_cmd.format(src=src_path,
-                                  dst=dst_path,
-                                  gainbias_path=gf.name,
-                                  solarillum_path=sf.name,
-                                  **metadata)
-            run_command(cmd)
+    cmd = base_cmd.format(src=src_path,
+                          dst=dst_path,
+                          gainbias_path=gf.name,
+                          solarillum_path=sf.name,
+                          **metadata)
+    run_command(cmd)
+
+    os.unlink(gf.name)
+    os.unlink(sf.name)

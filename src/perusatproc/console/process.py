@@ -33,6 +33,8 @@ DEFAULT_TILE_SIZE = 2**14
 
 
 def process_image(dem_path=None, geoid_path=None, *, src, dst):
+    _logger.info(f"Source: {src}")
+    _logger.info(f"Destination: {dst}")
 
     name, ext = os.path.splitext(os.path.basename(src))
     dirname = os.path.dirname(src)
@@ -46,22 +48,23 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
 
     calibration.calibrate(src_path=src,
                           dst_path=calibration_dst_path,
-                          metadata_path=os.path.join(dirname, dim_xml))
+                          metadata_path=dim_xml)
 
-    with tempfile.NamedTemporaryFile(suffix='.tif') as tempf:
-        _logger.info("Add RPC tags from %s and write %s", calibration_dst_path,
-                     tempf.name)
-        orthorectification.add_rpc_tags(src_path=calibration_dst_path,
-                                        dst_path=tempf.name,
-                                        metadata_path=os.path.join(
-                                            dirname, rpc_xml))
+    name, ext = os.path.splitext(os.path.basename(src))
+    temp_name = os.path.join(os.path.dirname(src), f'{name}_rpc{ext}')
 
-        _logger.info("Orthorectify %s and write %s", tempf.name,
-                     orthorectify_dst_path)
-        orthorectification.orthorectify(src_path=tempf.name,
-                                        dst_path=orthorectify_dst_path,
-                                        dem_path=dem_path,
-                                        geoid_path=geoid_path)
+    _logger.info("Add RPC tags from %s and write %s", calibration_dst_path,
+                 temp_name)
+    orthorectification.add_rpc_tags(src_path=calibration_dst_path,
+                                    dst_path=temp_name,
+                                    metadata_path=rpc_xml)
+
+    _logger.info("Orthorectify %s and write %s", temp_name,
+                 orthorectify_dst_path)
+    orthorectification.orthorectify(src_path=temp_name,
+                                    dst_path=orthorectify_dst_path,
+                                    dem_path=dem_path,
+                                    geoid_path=geoid_path)
 
 
 def build_virtual_raster(inputs, dst):
