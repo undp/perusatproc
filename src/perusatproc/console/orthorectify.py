@@ -116,6 +116,11 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
+    if not geoid_path:
+        _logger.info(f"Using default Geoid: {GEOID_PATH}")
+    if not dem_path:
+        _logger.info(f"Using default DEM files from: {DEM_PATH}")
+
     process_image(src_path=args.src,
                   dst_path=args.dst,
                   rpc_metadata_path=args.metadata,

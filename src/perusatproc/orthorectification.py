@@ -2,6 +2,7 @@
 
 import logging
 import os
+import pkg_resources
 
 import rasterio
 
@@ -14,9 +15,10 @@ __license__ = "mit"
 
 _logger = logging.getLogger(__name__)
 
-DATA_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
-GEOID_PATH = os.path.join(DATA_PATH, 'egm96.grd')
-DEM_PATH = os.path.join(DATA_PATH, 'dem')
+DATA_DIR = pkg_resources.resource_filename('perusatproc', 'data')
+GEOID_PATH = os.path.join(DATA_DIR, 'egm96.grd')
+DEM_PATH = os.path.join(DATA_DIR, 'dem')
+
 RPC_COEFF_KEYS = [
     'err_bias',
     'err_rand',

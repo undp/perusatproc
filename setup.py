@@ -18,12 +18,8 @@ except VersionConflict:
     print("Error: version of setuptools is too old (<38.3)!")
     sys.exit(1)
 
-
 if __name__ == "__main__":
-    setup(
-        use_pyscaffold=True,
-        data_files=[
-            ('perusatproc/data/dem', ['data/dem/S12W077.hgt','data/dem/S12W078.hgt','data/dem/S13W077.hgt','data/dem/S13W078.hgt']),
-            ('perusatproc/data', ['data/egm96.grd']),
-        ]
-    )
+    setup(use_pyscaffold=True,
+          package_data={
+              "perusatproc": ["data/egm96.grd", "data/dem/*"],
+          })
