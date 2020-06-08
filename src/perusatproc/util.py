@@ -17,10 +17,9 @@ def run_command(cmd):
 
 
 def run_otb_command(cmd):
-    otb_dir = os.getenv("OTB_DIR")
-    if otb_dir:
-        otbenv_path = os.path.join(otb_dir, "bin", "otbenv")
-        fullcmd = f"{otbenv_path} && {cmd}"
+    otb_env_path = os.getenv("OTB_ENV_PATH")
+    if otb_env_path:
+        fullcmd = f"{otb_env_path} && {cmd}"
     else:
         fullcmd = cmd
     _logger.info(fullcmd)
