@@ -5,7 +5,7 @@ import os
 import tempfile
 
 from perusatproc.metadata import extract_calibration_metadata
-from perusatproc.util import run_command
+from perusatproc.util import run_otb_command
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
@@ -51,7 +51,7 @@ def calibrate(*, src_path, dst_path, metadata_path):
                           gainbias_path=gf.name,
                           solarillum_path=sf.name,
                           **metadata)
-    run_command(cmd)
+    run_otb_command(cmd)
 
     os.unlink(gf.name)
     os.unlink(sf.name)

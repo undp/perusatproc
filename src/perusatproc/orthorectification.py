@@ -7,7 +7,7 @@ import pkg_resources
 import rasterio
 
 from perusatproc.metadata import extract_projection_metadata, extract_rpc_metadata
-from perusatproc.util import run_command
+from perusatproc.util import run_otb_command
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
@@ -88,4 +88,4 @@ def orthorectify(dem_path=None, geoid_path=None, *, src_path, dst_path):
                           dst=dst_path,
                           geoid_path=geoid_path,
                           dem_path=dem_path)
-    run_command(cmd)
+    run_otb_command(cmd)
