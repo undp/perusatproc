@@ -2,12 +2,13 @@
 perusatproc
 ===========
 
-Process PeruSat-1 Level 2A scenes.
+Process PeruSat-1 primary scenes into calibrated, orthorectified and
+pansharpened images.
 
 Description
 ===========
 
-This package allows you to process PeruSat-1 Level 2A scenes. You can perform
+This package allows you to process PeruSat-1 primary scenes. You can perform
 the following processing steps:
 
 - Radiometric calibration (top-of-atmosphere)
