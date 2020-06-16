@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.1.3
+=============
+
+- Applied nodata fill algorithm to SRTM DEM to avoid artifacts when
+  orthorectifying.
+
 Version 0.1.2
 =============
 
