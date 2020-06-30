@@ -13,7 +13,7 @@ import os
 import sys
 
 from perusatproc import __version__
-from perusatproc.orthorectification import add_rpc_tags, orthorectify
+from perusatproc.orthorectification import add_rpc_tags, orthorectify, GEOID_PATH, DEM_PATH
 
 __author__ = "Damián Silvani"
 __copyright__ = "Dymaxion Labs"
@@ -116,9 +116,9 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    if not args.geoid_path:
+    if not args.geoid:
         _logger.info(f"Using default Geoid: {GEOID_PATH}")
-    if not args.dem_path:
+    if not args.dem:
         _logger.info(f"Using default DEM files from: {DEM_PATH}")
 
     process_image(src_path=args.src,
