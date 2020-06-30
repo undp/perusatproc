@@ -2,6 +2,10 @@
 Changelog
 =========
 
+Version 0.1.4
+
+- Bugfixes related to perusat_orthorectify CLI script.
+
 Version 0.1.3
 =============
 
