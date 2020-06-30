@@ -205,6 +205,11 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
 
+    if not args.geoid_path:
+        _logger.info(f"Using default Geoid: {GEOID_PATH}")
+    if not args.dem_path:
+        _logger.info(f"Using default DEM files from: {DEM_PATH}")
+
     process_product(args.src,
                     args.dst,
                     tile_size=args.tile_size,
