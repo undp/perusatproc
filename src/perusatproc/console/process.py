@@ -93,7 +93,8 @@ def process_product(src,
                     dst,
                     tile_size=DEFAULT_TILE_SIZE,
                     dem_path=None,
-                    geoid_path=None):
+                    geoid_path=None,
+                    retile=False):
     volumes = glob(os.path.join(src, 'VOL_*'))
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
@@ -123,7 +124,7 @@ def process_product(src,
     vrt_path = os.path.join(dst, '{}.vrt'.format(name))
     build_virtual_raster(inputs=gdal_imgs, dst=vrt_path)
 
-    if args.retile:
+    if retile:
         # Retile virtual raster
         tiles_dir = os.path.join(dst, 'tiles')
         _logger.info("Retile %s on %s using size (%d, %d)", vrt_path, tiles_dir, tile_size, tile_size)
@@ -231,7 +232,8 @@ def main(args):
                     args.dst,
                     tile_size=args.tile_size,
                     dem_path=args.dem,
-                    geoid_path=args.geoid)
+                    geoid_path=args.geoid,
+                    retile=args.retile)
 
 
 def run():
