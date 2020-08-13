@@ -33,7 +33,7 @@ _logger = logging.getLogger(__name__)
 DEFAULT_TILE_SIZE = 2**14
 
 
-def process_image(dem_path=None, geoid_path=None, *, src, dst):
+def process_image(dem_path=None, geoid_path=None, spacing=None, *, src, dst):
     _logger.info(f"Source: {src}")
     _logger.info(f"Destination: {dst}")
 
@@ -70,7 +70,8 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
     orthorectification.orthorectify(src_path=rpc_fixed_path,
                                     dst_path=orthorectify_path,
                                     dem_path=dem_path,
-                                    geoid_path=geoid_path)
+                                    geoid_path=geoid_path,
+                                    spacing=spacing)
 
     _logger.info("Clean up image temporary results")
     shutil.rmtree(calibration_dir)
@@ -98,6 +99,7 @@ def process_product(src,
                     tile_size=DEFAULT_TILE_SIZE,
                     dem_path=None,
                     geoid_path=None,
+                    spacing=None,
                     retile=False):
     volumes = glob(os.path.join(src, 'VOL_*'))
     _logger.info("Num. Volumes: {}".format(len(volumes)))
@@ -110,11 +112,13 @@ def process_product(src,
         process_image(src=ms_img,
                       dst=dst,
                       dem_path=dem_path,
-                      geoid_path=geoid_path)
+                      geoid_path=geoid_path,
+                      spacing=spacing)
         process_image(src=p_img,
                       dst=dst,
                       dem_path=dem_path,
-                      geoid_path=geoid_path)
+                      geoid_path=geoid_path,
+                      spacing=spacing)
 
         ortho_dir = os.path.join(dst, '_ortho')
         volume_dst_path = os.path.join(dst, '{}.tif'.format(os.path.basename(volume)))
@@ -199,6 +203,9 @@ def parse_args(args):
     )
     parser.add_argument("--geoid",
                         help="path to geoid file (defaults to EGM96 geoid)")
+    parser.add_argument("--spacing",
+                        default=15,
+                        help="resampling grid spacing")
 
     parser.add_argument("-co",
                         "--create-options",
@@ -240,6 +247,7 @@ def main(args):
                     tile_size=args.tile_size,
                     dem_path=args.dem,
                     geoid_path=args.geoid,
+                    spacing=args.spacing,
                     retile=args.retile)
 
 

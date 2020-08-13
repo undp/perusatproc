@@ -70,13 +70,17 @@ def add_rpc_tags(*, src_path, dst_path, metadata_path):
             dst.update_tags(ns='RPC', **tags)
 
 
-def orthorectify(dem_path=None, geoid_path=None, *, src_path, dst_path):
+def orthorectify(dem_path=None, geoid_path=None, spacing=None, *, src_path, dst_path):
+    spacing_opt = ""
+    if spacing:
+        spacing_opt = "-opt.gridspacing {spacing}".format(spacing=spacing)
     base_cmd = """otbcli_OrthoRectification \
       -io.in \"{src}?&skipcarto=true\" \
       -io.out {dst} uint16 \
       -outputs.mode auto \
       -elev.geoid {geoid_path} \
-      -elev.dem {dem_path}
+      -elev.dem {dem_path} \
+      {spacing_opt}
     """
 
     if not geoid_path:
@@ -87,5 +91,6 @@ def orthorectify(dem_path=None, geoid_path=None, *, src_path, dst_path):
     cmd = base_cmd.format(src=src_path,
                           dst=dst_path,
                           geoid_path=geoid_path,
-                          dem_path=dem_path)
+                          dem_path=dem_path,
+                          spacing_opt=spacing_opt)
     run_otb_command(cmd)

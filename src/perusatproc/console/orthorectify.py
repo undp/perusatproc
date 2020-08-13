@@ -25,6 +25,7 @@ _logger = logging.getLogger(__name__)
 def process_image(rpc_metadata_path=None,
                   dem_path=None,
                   geoid_path=None,
+                  spacing=None,
                   *,
                   src_path,
                   dst_path):
@@ -42,7 +43,8 @@ def process_image(rpc_metadata_path=None,
     orthorectify(src_path=rpc_fixed_path,
                  dst_path=dst_path,
                  dem_path=dem_path,
-                 geoid_path=geoid_path)
+                 geoid_path=geoid_path,
+                 spacing=spacing)
 
     _logger.info("Clean up temporary results")
     shutil.rmtree(rpc_fixed_dir)
@@ -92,6 +94,9 @@ def parse_args(args):
     )
     parser.add_argument("--geoid",
                         help="path to geoid file (defaults to EGM96 geoid)")
+    parser.add_argument("--spacing",
+                        default=15,
+                        help="resampling grid spacing")
 
     return parser.parse_args(args)
 
@@ -127,7 +132,8 @@ def main(args):
                   dst_path=args.dst,
                   rpc_metadata_path=args.metadata,
                   dem_path=args.dem,
-                  geoid_path=args.geoid)
+                  geoid_path=args.geoid,
+                  spacing=args.spacing)
 
 
 def run():
