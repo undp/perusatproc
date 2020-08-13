@@ -37,33 +37,38 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
     _logger.info(f"Source: {src}")
     _logger.info(f"Destination: {dst}")
 
-    name, ext = os.path.splitext(os.path.basename(src))
+    basename = os.path.basename(src)
+    name, ext = os.path.splitext(basename)
     dirname = os.path.dirname(src)
     dim_xml = glob(os.path.join(dirname, 'DIM_*.XML'))[0]
     rpc_xml = glob(os.path.join(dirname, 'RPC_*.XML'))[0]
 
-    os.makedirs(os.path.join(dst, 'calibarate'), exist_ok=True)
-    os.makedirs(os.path.join(dst, 'orthorectify'), exist_ok=True)
-    calibration_dst_path = os.path.join(dst, 'calibarate', name + ext)
-    orthorectify_dst_path = os.path.join(dst, 'orthorectify', name + ext)
+    calibration_dir_path = os.path.join(dst, '_calib')
+    os.makedirs(calibration_dir_path, exist_ok=True)
+    calibration_path = os.path.join(calibration_dir_path, basename)
 
+    _logger.info("Calibrate %s and write %s", src, calibration_path)
     calibration.calibrate(src_path=src,
-                          dst_path=calibration_dst_path,
+                          dst_path=calibration_path,
                           metadata_path=dim_xml)
 
-    name, ext = os.path.splitext(os.path.basename(src))
-    temp_name = os.path.join(os.path.dirname(src), f'{name}_rpc{ext}')
+    rpc_fixed_dir = os.path.join(dst, '_rpc')
+    os.makedirs(rpc_fixed_dir, exist_ok=True)
+    rpc_fixed_path = os.path.join(rpc_fixed_dir, basename)
 
-    _logger.info("Add RPC tags from %s and write %s", calibration_dst_path,
-                 temp_name)
-    orthorectification.add_rpc_tags(src_path=calibration_dst_path,
-                                    dst_path=temp_name,
+    _logger.info("Add RPC tags from %s and write %s", calibration_path,
+                 rpc_fixed_path)
+    orthorectification.add_rpc_tags(src_path=calibration_path,
+                                    dst_path=rpc_fixed_path,
                                     metadata_path=rpc_xml)
 
-    _logger.info("Orthorectify %s and write %s", temp_name,
-                 orthorectify_dst_path)
-    orthorectification.orthorectify(src_path=temp_name,
-                                    dst_path=orthorectify_dst_path,
+    orthorectify_fixed_dir = os.path.join(dst, '_ortho')
+    os.makedirs(orthorectify_fixed_dir, exist_ok=True)
+    orthorectify_path = os.path.join(orthorectify_fixed_dir, basename)
+    _logger.info("Orthorectify %s and write %s", rpc_fixed_path,
+                 orthorectify_path)
+    orthorectification.orthorectify(src_path=rpc_fixed_path,
+                                    dst_path=orthorectify_path,
                                     dem_path=dem_path,
                                     geoid_path=geoid_path)
 
@@ -92,9 +97,6 @@ def process_product(src,
     volumes = glob(os.path.join(src, 'VOL_*'))
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
-    os.makedirs(dst, exist_ok=True)
-    os.makedirs(os.path.join(dst, 'pansharpening'), exist_ok=True)
-
     gdal_imgs = []
 
     for volume in volumes:
@@ -108,24 +110,30 @@ def process_product(src,
                       dst=volume,
                       dem_path=dem_path,
                       geoid_path=geoid_path)
-        pansharpening_dst = os.path.join(
-            dst, 'pansharpening', '{}.tif'.format(os.path.basename(volume)))
-        pansharpening.pansharpen(inp=os.path.join(volume, 'orthorectify',
-                                                  os.path.basename(p_img)),
-                                 inxs=os.path.join(volume, 'orthorectify',
-                                                   os.path.basename(ms_img)),
-                                 out=pansharpening_dst)
-        gdal_imgs.append(pansharpening_dst)
 
+        ortho_dir = os.path.join(dst, '_ortho')
+        volume_dst_path = os.path.join(dst, '{}.tif'.format(os.path.basename(volume)))
+        pansharpening.pansharpen(inp=os.path.join(ortho_dir, os.path.basename(p_img)),
+                                 inxs=os.path.join(ortho_dir, os.path.basename(ms_img)),
+                                 out=volume_dst_path)
+        gdal_imgs.append(volume_dst_path)
+
+    # Create pansharpened virtual raster
     name, _ = os.path.splitext(os.path.basename(src))
-    vrt_path = os.path.join(dst, 'pansharpening', '{}.vrt'.format(name))
+    vrt_path = os.path.join(dst, '{}.vrt'.format(name))
     build_virtual_raster(inputs=gdal_imgs, dst=vrt_path)
 
-    retile_images(src=vrt_path, outdir=dst, tile_size=tile_size)
-
-    tile_paths = glob(os.path.join(dst, '*.tif'))
-    tiles_vrt_path = os.path.join(dst, '{}.vrt'.format(name))
-    build_virtual_raster(inputs=tile_paths, dst=tiles_vrt_path)
+    if args.retile:
+        # Retile virtual raster
+        tiles_dir = os.path.join(dst, 'tiles')
+        _logger.info("Retile %s on %s using size (%d, %d)", vrt_path, tiles_dir, tile_size, tile_size)
+        retile_images(src=vrt_path, outdir=tiles_dir, tile_size=tile_size)
+        
+        # Create virtual raster for all pansharpened tiles
+        tile_paths = glob(os.path.join(dst, '*.tif'))
+        tiles_vrt_path = os.path.join(tiles_dir, '{}.vrt'.format(name))
+        build_virtual_raster(inputs=tile_paths, dst=tiles_vrt_path)
+        _logger.info("Create virtual raster %s for tiles", tiles_vrt_path)
 
 
 def parse_args(args):
@@ -163,6 +171,14 @@ def parse_args(args):
     parser.add_argument("dst",
                         help="path to output directory containing tiles")
 
+    parser.add_argument("--retile", 
+                        dest="retile",
+                        action="store_true", 
+                        help="Retile processed image")
+    parser.add_argument("--no-retile", 
+                        dest="retile",
+                        action="store_false", 
+                        help="Do not retile processed image")
     parser.add_argument("--tile-size",
                         type=int,
                         default=DEFAULT_TILE_SIZE,
