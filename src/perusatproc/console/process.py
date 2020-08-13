@@ -101,7 +101,8 @@ def process_product(src,
                     dem_path=None,
                     geoid_path=None,
                     spacing=None,
-                    retile=False):
+                    retile=False,
+                    create_options=[]):
     volumes = glob(os.path.join(src, 'VOL_*'))
     _logger.info("Num. Volumes: {}".format(len(volumes)))
 
@@ -125,7 +126,8 @@ def process_product(src,
         volume_dst_path = os.path.join(dst, '{}.tif'.format(os.path.basename(volume)))
         pansharpening.pansharpen(inp=os.path.join(ortho_dir, os.path.basename(p_img)),
                                  inxs=os.path.join(ortho_dir, os.path.basename(ms_img)),
-                                 out=volume_dst_path)
+                                 out=volume_dst_path,
+                                 create_options=create_options)
         gdal_imgs.append(volume_dst_path)
 
         _logger.info("Clean up volume temporary results")
@@ -210,7 +212,8 @@ def parse_args(args):
 
     parser.add_argument("-co",
                         "--create-options",
-                        default="",
+                        default=list,
+                        nargs="+",
                         help="GDAL create options")
 
     return parser.parse_args(args)
@@ -249,7 +252,8 @@ def main(args):
                     dem_path=args.dem,
                     geoid_path=args.geoid,
                     spacing=args.spacing,
-                    retile=args.retile)
+                    retile=args.retile,
+                    create_options=args.create_options)
 
 
 def run():
