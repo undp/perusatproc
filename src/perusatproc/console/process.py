@@ -19,6 +19,7 @@ from perusatproc.orthorectification import GEOID_PATH, DEM_PATH
 import subprocess
 import xmltodict
 import tempfile
+import shutil
 import rasterio
 import os
 from glob import glob
