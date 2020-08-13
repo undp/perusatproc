@@ -2,7 +2,20 @@
 Changelog
 =========
 
+Version 0.1.5
+=============
+
+- Store intermediate results on destination directory when using perusat_process.
+- Delete temporary files if processes (and subprocesses) finish successfully.
+- Upgrade default SRTM DEM files with 1-arc second (~30m GSD) instead of 90m.
+  Also now they are stored with no compression for faster orthorectification
+  processing.
+- Add new --spacing argument for orthorectify and process console scripts to
+  set resampling spacing size (by default uses 15m, which is half the GSD of
+  the bundled SRTM DEM files).
+
 Version 0.1.4
+=============
 
 - Bugfixes related to perusat_orthorectify CLI script.
 
