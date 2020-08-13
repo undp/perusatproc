@@ -11,6 +11,7 @@ import argparse
 import logging
 import os
 import sys
+import shutil
 
 from perusatproc import __version__
 from perusatproc.orthorectification import add_rpc_tags, orthorectify, GEOID_PATH, DEM_PATH
