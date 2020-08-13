@@ -29,21 +29,23 @@ def process_image(rpc_metadata_path=None,
                   src_path,
                   dst_path):
 
-    name, ext = os.path.splitext(os.path.basename(src_path))
-    temp_name = os.path.join(os.path.dirname(src_path), f'{name}_rpc{ext}')
+    rpc_fixed_dir = os.path.join(os.path.dirname(dst_path), '_rpc')
+    os.makedirs(rpc_fixed_dir, exist_ok=True)
+    rpc_fixed_path = os.path.join(rpc_fixed_dir, os.path.basename(src_path))
 
-    _logger.info("Add RPC tags from %s and write %s", src_path, temp_name)
+    _logger.info("Add RPC tags from %s and write %s", src_path, rpc_fixed_path)
     add_rpc_tags(src_path=src_path,
-                 dst_path=temp_name,
+                 dst_path=rpc_fixed_path,
                  metadata_path=rpc_metadata_path)
 
-    _logger.info("Orthorectify %s and write %s", temp_name, dst_path)
-    orthorectify(src_path=temp_name,
+    _logger.info("Orthorectify %s and write %s", rpc_fixed_path, dst_path)
+    orthorectify(src_path=rpc_fixed_path,
                  dst_path=dst_path,
                  dem_path=dem_path,
                  geoid_path=geoid_path)
 
-    os.unlink(temp_name)
+    _logger.info("Clean up temporary results")
+    shutil.rmtree(rpc_fixed_dir)
 
 
 def parse_args(args):

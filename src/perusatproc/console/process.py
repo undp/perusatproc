@@ -43,9 +43,9 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
     dim_xml = glob(os.path.join(dirname, 'DIM_*.XML'))[0]
     rpc_xml = glob(os.path.join(dirname, 'RPC_*.XML'))[0]
 
-    calibration_dir_path = os.path.join(dst, '_calib')
-    os.makedirs(calibration_dir_path, exist_ok=True)
-    calibration_path = os.path.join(calibration_dir_path, basename)
+    calibration_dir = os.path.join(dst, '_calib')
+    os.makedirs(calibration_dir, exist_ok=True)
+    calibration_path = os.path.join(calibration_dir, basename)
 
     _logger.info("Calibrate %s and write %s", src, calibration_path)
     calibration.calibrate(src_path=src,
@@ -71,6 +71,10 @@ def process_image(dem_path=None, geoid_path=None, *, src, dst):
                                     dst_path=orthorectify_path,
                                     dem_path=dem_path,
                                     geoid_path=geoid_path)
+
+    _logger.info("Clean up image temporary results")
+    shutil.rmtree(calibration_dir)
+    shutil.rmtree(rpc_fixed_dir)
 
 
 def build_virtual_raster(inputs, dst):
@@ -118,6 +122,9 @@ def process_product(src,
                                  inxs=os.path.join(ortho_dir, os.path.basename(ms_img)),
                                  out=volume_dst_path)
         gdal_imgs.append(volume_dst_path)
+
+        _logger.info("Clean up volume temporary results")
+        shutil.rmtree(ortho_dir)
 
     # Create pansharpened virtual raster
     name, _ = os.path.splitext(os.path.basename(src))
