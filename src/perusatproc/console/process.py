@@ -103,11 +103,11 @@ def process_product(src,
         ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
         p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
         process_image(src=ms_img,
-                      dst=volume,
+                      dst=dst,
                       dem_path=dem_path,
                       geoid_path=geoid_path)
         process_image(src=p_img,
-                      dst=volume,
+                      dst=dst,
                       dem_path=dem_path,
                       geoid_path=geoid_path)
 
