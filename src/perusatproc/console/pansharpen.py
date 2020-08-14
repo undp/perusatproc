@@ -56,6 +56,11 @@ def parse_args(args):
     parser.add_argument("src", help="path to input image")
     parser.add_argument("dst", help="path to output image")
 
+    parser.add_argument("-co",
+                        "--create-options",
+                        nargs="+",
+                        help="GDAL create options")
+
     return parser.parse_args(args)
 
 
@@ -83,7 +88,7 @@ def main(args):
 
     _logger.debug("Args: %s", args)
 
-    pansharpen(args.src, args.dst)
+    pansharpen(args.src, args.dst, create_options=args.create_options)
 
 
 def run():

@@ -27,6 +27,7 @@ def process_image(rpc_metadata_path=None,
                   dem_path=None,
                   geoid_path=None,
                   spacing=None,
+                  create_options=[],
                   *,
                   src_path,
                   dst_path):
@@ -45,7 +46,8 @@ def process_image(rpc_metadata_path=None,
                  dst_path=dst_path,
                  dem_path=dem_path,
                  geoid_path=geoid_path,
-                 spacing=spacing)
+                 spacing=spacing,
+                 create_options=create_options)
 
     _logger.info("Clean up temporary results")
     shutil.rmtree(rpc_fixed_dir)
@@ -99,6 +101,11 @@ def parse_args(args):
                         default=15,
                         help="resampling grid spacing")
 
+    parser.add_argument("-co",
+                        "--create-options",
+                        nargs="+",
+                        help="GDAL create options")
+
     return parser.parse_args(args)
 
 
@@ -134,7 +141,8 @@ def main(args):
                   rpc_metadata_path=args.metadata,
                   dem_path=args.dem,
                   geoid_path=args.geoid,
-                  spacing=args.spacing)
+                  spacing=args.spacing,
+                  create_options=args.create_options)
 
 
 def run():

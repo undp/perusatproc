@@ -14,10 +14,13 @@ __license__ = "mit"
 _logger = logging.getLogger(__name__)
 
 
-def calibrate(*, src_path, dst_path, metadata_path):
+def calibrate(*, src_path, dst_path, metadata_path, create_options=[]):
+    create_opt = ''
+    if create_options:
+        create_opt = '&'.join('gdal:co:{}'.format(opt) for opt in create_options)
     base_cmd = """otbcli_OpticalCalibration \
       -in {src} \
-      -out {dst} uint16 \
+      -out "{dst}?{create_opt}" uint16 \
       -milli true \
       -level toa \
       -acqui.minute {minute} \
@@ -50,6 +53,7 @@ def calibrate(*, src_path, dst_path, metadata_path):
                           dst=dst_path,
                           gainbias_path=gf.name,
                           solarillum_path=sf.name,
+                          create_opt=create_opt,
                           **metadata)
     run_otb_command(cmd)
 

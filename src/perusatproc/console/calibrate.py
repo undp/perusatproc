@@ -21,7 +21,7 @@ __license__ = "mit"
 _logger = logging.getLogger(__name__)
 
 
-def process_image(src, dst, metadata=None):
+def process_image(src, dst, metadata=None, create_options=[]):
     if not metadata:
         _logger.info(
             "Metadata file not provided. Going to look for XML file in src image directory."
@@ -37,7 +37,7 @@ def process_image(src, dst, metadata=None):
 
     _logger.info("Metadata file: {}".format(metadata))
 
-    calibrate(src_path=src, dst_path=dst, metadata_path=metadata)
+    calibrate(src_path=src, dst_path=dst, metadata_path=metadata, create_options=create_options)
 
 
 def parse_args(args):
@@ -75,6 +75,11 @@ def parse_args(args):
     parser.add_argument("dst", help="path to output image")
     parser.add_argument("-m", "--metadata", help="path to metadata XML file")
 
+    parser.add_argument("-co",
+                        "--create-options",
+                        nargs="+",
+                        help="GDAL create options")
+
     return parser.parse_args(args)
 
 
@@ -102,7 +107,7 @@ def main(args):
 
     _logger.debug("Args: %s", args)
 
-    process_image(args.src, args.dst, metadata=args.metadata)
+    process_image(args.src, args.dst, metadata=args.metadata, create_options=args.create_options)
 
 
 def run():

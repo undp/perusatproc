@@ -212,7 +212,6 @@ def parse_args(args):
 
     parser.add_argument("-co",
                         "--create-options",
-                        default=list,
                         nargs="+",
                         help="GDAL create options")
 

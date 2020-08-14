@@ -70,12 +70,15 @@ def add_rpc_tags(*, src_path, dst_path, metadata_path):
             dst.update_tags(ns='RPC', **tags)
 
 
-def orthorectify(dem_path=None, geoid_path=None, spacing=None, *, src_path, dst_path):
+def orthorectify(dem_path=None, geoid_path=None, spacing=None, create_options=[], *, src_path, dst_path):
     spacing_opt = ""
     if spacing:
         spacing_opt = "-opt.gridspacing {spacing}".format(spacing=spacing)
+    create_opt = ''
+    if create_options:
+        create_opt = '&'.join('gdal:co:{}'.format(opt) for opt in create_options)
     base_cmd = """otbcli_OrthoRectification \
-      -io.in \"{src}?&skipcarto=true\" \
+      -io.in \"{src}?{create_opt}&skipcarto=true\" \
       -io.out {dst} uint16 \
       -outputs.mode auto \
       -elev.geoid {geoid_path} \
