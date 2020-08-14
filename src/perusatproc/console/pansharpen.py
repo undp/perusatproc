@@ -53,7 +53,8 @@ def parse_args(args):
                         action="store_const",
                         const=logging.DEBUG)
 
-    parser.add_argument("src", help="path to input image")
+    parser.add_argument("ms_src", help="path to input MS (multispectral) image")
+    parser.add_argument("p_src", help="path to input P (panchromatic) image")
     parser.add_argument("dst", help="path to output image")
 
     parser.add_argument("-co",
@@ -88,7 +89,7 @@ def main(args):
 
     _logger.debug("Args: %s", args)
 
-    pansharpen(args.src, args.dst, create_options=args.create_options)
+    pansharpen(args.p_src, args.ms_src, args.dst, create_options=args.create_options)
 
 
 def run():
