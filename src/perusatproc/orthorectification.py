@@ -95,5 +95,6 @@ def orthorectify(dem_path=None, geoid_path=None, spacing=None, create_options=[]
                           dst=dst_path,
                           geoid_path=geoid_path,
                           dem_path=dem_path,
-                          spacing_opt=spacing_opt)
+                          spacing_opt=spacing_opt,
+                          create_opt=create_opt)
     run_otb_command(cmd)
