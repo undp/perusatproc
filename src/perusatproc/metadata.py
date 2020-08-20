@@ -19,10 +19,19 @@ RPC_COEFF_PAIRS = [
 ]
 
 
-def extract_calibration_metadata(metadata_path):
-    with open(metadata_path) as f:
-        body = xmltodict.parse(f.read())
+def read_metadata(path):
+    with open(path) as f:
+        return xmltodict.parse(f.read())
 
+
+def extract_raster_filepath(metadata_path):
+    body = read_metadata(metadata_path)
+    doc = body['Dimap_Document']
+    return doc['Raster_Data']['Data_Access']['Data_Files']['Data_File']['DATA_FILE_PATH']['@href']
+
+
+def extract_calibration_metadata(metadata_path):
+    body = read_metadata(metadata_path)
     doc = body['Dimap_Document']
 
     # Image date and time
@@ -75,9 +84,7 @@ def extract_calibration_metadata(metadata_path):
 
 
 def extract_projection_metadata(metadata_path):
-    with open(metadata_path) as f:
-        body = xmltodict.parse(f.read())
-
+    body = read_metadata(metadata_path)
     doc = body['Dimap_Document']
 
     # Raster size

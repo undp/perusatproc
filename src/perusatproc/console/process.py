@@ -15,6 +15,7 @@ from perusatproc import __version__
 from perusatproc import calibration, orthorectification, pansharpening
 from perusatproc.util import run_command
 from perusatproc.orthorectification import GEOID_PATH, DEM_PATH
+from perusatproc.metadata import extract_raster_filepath
 
 import subprocess
 import xmltodict
@@ -38,18 +39,18 @@ def process_image(dem_path=None, geoid_path=None, spacing=None, *, src, dst):
     _logger.info(f"Source: {src}")
     _logger.info(f"Destination: {dst}")
 
-    basename = os.path.basename(src)
-    name, ext = os.path.splitext(basename)
-    dirname = os.path.dirname(src)
-    dim_xml = glob(os.path.join(dirname, 'DIM_*.XML'))[0]
-    rpc_xml = glob(os.path.join(dirname, 'RPC_*.XML'))[0]
+    dim_xml = glob(os.path.join(src, 'DIM_*.XML'))[0]
+    rpc_xml = glob(os.path.join(src, 'RPC_*.XML'))[0]
+
+    src_path = os.path.join(src, extract_raster_filepath(dim_xml))
+    basename = os.path.basename(src_path)
 
     calibration_dir = os.path.join(dst, '_calib')
     os.makedirs(calibration_dir, exist_ok=True)
     calibration_path = os.path.join(calibration_dir, basename)
 
-    _logger.info("Calibrate %s and write %s", src, calibration_path)
-    calibration.calibrate(src_path=src,
+    _logger.info("Calibrate %s and write %s", src_path, calibration_path)
+    calibration.calibrate(src_path=src_path,
                           dst_path=calibration_path,
                           metadata_path=dim_xml)
 
@@ -109,14 +110,15 @@ def process_product(src,
     gdal_imgs = []
 
     for volume in volumes:
-        ms_img = glob(os.path.join(volume, 'IMG_*_MS_*/*.TIF'))[0]
-        p_img = glob(os.path.join(volume, 'IMG_*_P_*/*.TIF'))[0]
-        process_image(src=ms_img,
+        ms_dirname = glob(os.path.join(volume, 'IMG_*_MS_*'))[0]
+        p_dirname = glob(os.path.join(volume, 'IMG_*_P_*'))[0]
+
+        process_image(src=ms_dirname,
                       dst=dst,
                       dem_path=dem_path,
                       geoid_path=geoid_path,
                       spacing=spacing)
-        process_image(src=p_img,
+        process_image(src=p_dirname,
                       dst=dst,
                       dem_path=dem_path,
                       geoid_path=geoid_path,
