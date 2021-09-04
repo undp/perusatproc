@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.1.6
+=============
+
+- Rename OTB_ENV_PATH for OTB_PROFILE_PATH
+- Fix OTB profile activation on Linux/OSX
+
 Version 0.1.5
 =============
 
