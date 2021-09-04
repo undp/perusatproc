@@ -79,6 +79,8 @@ def process_image(dem_path=None, geoid_path=None, spacing=None, *, src, dst):
     shutil.rmtree(calibration_dir)
     shutil.rmtree(rpc_fixed_dir)
 
+    return orthorectify_path
+
 
 def build_virtual_raster(inputs, dst):
     cmd = 'gdalbuildvrt {dst} {inputs}'.format(dst=dst,
@@ -113,21 +115,24 @@ def process_product(src,
         ms_dirname = glob(os.path.join(volume, 'IMG_*_MS_*'))[0]
         p_dirname = glob(os.path.join(volume, 'IMG_*_P_*'))[0]
 
-        process_image(src=ms_dirname,
-                      dst=dst,
-                      dem_path=dem_path,
-                      geoid_path=geoid_path,
-                      spacing=spacing)
-        process_image(src=p_dirname,
-                      dst=dst,
-                      dem_path=dem_path,
-                      geoid_path=geoid_path,
-                      spacing=spacing)
+        ms_img = process_image(src=ms_dirname,
+                               dst=dst,
+                               dem_path=dem_path,
+                               geoid_path=geoid_path,
+                               spacing=spacing)
+        p_img = process_image(src=p_dirname,
+                              dst=dst,
+                              dem_path=dem_path,
+                              geoid_path=geoid_path,
+                              spacing=spacing)
 
         ortho_dir = os.path.join(dst, '_ortho')
-        volume_dst_path = os.path.join(dst, '{}.tif'.format(os.path.basename(volume)))
-        pansharpening.pansharpen(inp=os.path.join(ortho_dir, os.path.basename(p_img)),
-                                 inxs=os.path.join(ortho_dir, os.path.basename(ms_img)),
+        volume_dst_path = os.path.join(
+            dst, '{}.tif'.format(os.path.basename(volume)))
+        pansharpening.pansharpen(inp=os.path.join(ortho_dir,
+                                                  os.path.basename(p_img)),
+                                 inxs=os.path.join(ortho_dir,
+                                                   os.path.basename(ms_img)),
                                  out=volume_dst_path,
                                  create_options=create_options)
         gdal_imgs.append(volume_dst_path)
@@ -143,9 +148,10 @@ def process_product(src,
     if retile:
         # Retile virtual raster
         tiles_dir = os.path.join(dst, 'tiles')
-        _logger.info("Retile %s on %s using size (%d, %d)", vrt_path, tiles_dir, tile_size, tile_size)
+        _logger.info("Retile %s on %s using size (%d, %d)", vrt_path,
+                     tiles_dir, tile_size, tile_size)
         retile_images(src=vrt_path, outdir=tiles_dir, tile_size=tile_size)
-        
+
         # Create virtual raster for all pansharpened tiles
         tile_paths = glob(os.path.join(dst, '*.tif'))
         tiles_vrt_path = os.path.join(tiles_dir, '{}.vrt'.format(name))
@@ -188,13 +194,13 @@ def parse_args(args):
     parser.add_argument("dst",
                         help="path to output directory containing tiles")
 
-    parser.add_argument("--retile", 
+    parser.add_argument("--retile",
                         dest="retile",
-                        action="store_true", 
+                        action="store_true",
                         help="Retile processed image")
-    parser.add_argument("--no-retile", 
+    parser.add_argument("--no-retile",
                         dest="retile",
-                        action="store_false", 
+                        action="store_false",
                         help="Do not retile processed image")
     parser.add_argument("--tile-size",
                         type=int,
